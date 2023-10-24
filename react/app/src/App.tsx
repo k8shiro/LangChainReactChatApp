@@ -131,7 +131,6 @@ const App:React.FC = () => {
 
     const onDisconnect = () => {
       setIsConnected(false);
-      chatId && socket.emit('leave', { room: chatId });
     }
 
     const onMessageEvent = (value: Message)  => {
