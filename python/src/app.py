@@ -15,22 +15,25 @@ app.json.ensure_ascii = False
 app.logger.setLevel(logging.INFO)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-
+# クライアントがサーバーに接続した際のイベントハンドラ
 @socketio.on('connect')
 def handle_connect():
     app.logger.info("connect")
 
+# チャットルームに参加するイベントハンドラ
 @socketio.on('join')
 def join(msg):
     join_room(str(msg["room"]))
     app.logger.info(f'user join room: {msg["room"]}')
 
+# チャットルームから退出するイベントハンドラ
 @socketio.on('leave')
 def join(msg):
     leave_room(str(msg["room"]))
     app.logger.info(f'user leave room: {msg["room"]}')
 
-@socketio.on("chat")
+# ユーザーからのチャットメッセージを処理しAIのメッセージを生成するイベントハンドラ
+@socketio.on('chatMessage')
 def handle_message(msg):
     app.logger.info("user message: {}".format(msg))
     if msg is not None:
@@ -38,7 +41,7 @@ def handle_message(msg):
             chatid = msg['chatid']
             app.logger.error(f'chatid is not exist: {chatid}')
             emit(
-                'chat',
+                'chatMessage',
                 {
                     'chatid': chatid,
                     'type': 'ai',
@@ -48,13 +51,15 @@ def handle_message(msg):
                 room=str(msg["chatid"])
             )
             return
-        emit('chat', msg, broadcast=True, room=str(msg["chatid"]))
+        emit('chatMessage', msg, broadcast=True, room=str(msg["chatid"]))
 
+        # AI応答を生成し、クライアントにブロードキャスト
         assistant = Assistant(msg['chatid'])
         assistant_msg = assistant.generate_response(msg['message'])
-        emit('chat', assistant_msg, broadcast=True, room=str(msg["chatid"]))
+        emit('chatMessage', assistant_msg, broadcast=True, room=str(msg["chatid"]))
         app.logger.info("assistant message: {}".format(assistant_msg))
 
+# 特定のチャットルームの履歴を取得するエンドポイント
 @app.route('/chat-history/<chatid>', methods=['GET'])
 def get_chat_history(chatid):
     history = get_messages_by_chatid(chatid)
@@ -69,23 +74,27 @@ def get_chat_history(chatid):
         app.logger.info("history: {}".format(history))
         return jsonify(history)
 
+# 特定のチャットルームの情報を取得するエンドポイント
 @app.route('/chat/<chatid>', methods=['GET'])
 def get_chat(chatid):
     chat = get_chat_by_id(chatid)
     app.logger.info("chat: {}".format(chat))
     return jsonify(chat)
 
+# 特定のチャットルームを削除するエンドポイント
 @app.route('/chat/<chatid>', methods=['DELETE'])
 def del_chat(chatid):
     delete_chat(chatid)
     return jsonify({})
 
+# 特定のチャットルーム一覧を取得するエンドポイント
 @app.route('/chat', methods=['GET'])
 def get_chat_list():
     chats = get_all_chats()
     app.logger.info(f'chat list: {chats}')
     return jsonify(chats)
 
+# チャットルームを追加するエンドポイント
 @app.route('/chat', methods=['POST'])
 def add_chat():
     title = ''

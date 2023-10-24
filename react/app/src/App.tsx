@@ -1,17 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { Col, Row, Typography, Input, Avatar, Button, Divider, Space, Tag } from 'antd';
 import { UserOutlined, RobotOutlined, PlusOutlined, MessageOutlined, DeleteOutlined, SendOutlined } from '@ant-design/icons';
-import { socket } from './socket';
+import { socket } from './socket'; // socket接続先の定義
 import './App.css';
 
 const { Text } = Typography;
 
+// メッセージの型
 type Message = {
   chatid: number;
   type: string;
   message: string;
 }
 
+// チャット部屋の型
 type Chat = {
   id: number;
   createdAt: number;
@@ -26,6 +28,7 @@ const App:React.FC = () => {
   const [message, setMessage] = useState<Message | null>();
   const [messages, setMessages] = useState<Message[]>([]);
 
+  // チャット履歴を取得する非同期関数
   const fetchMessages = async (): Promise<Message[]> => {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/chat-history/${chatId}`);
@@ -40,6 +43,7 @@ const App:React.FC = () => {
     }
   }
 
+  // チャット部屋情報を取得する非同期関数
   const fetchChat = async (): Promise<Chat> => {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/chat/${chatId}`);
@@ -54,6 +58,7 @@ const App:React.FC = () => {
     }
   }
 
+  // チャット部屋を削除する非同期関数
   const deleteChat = async (deletedChatId: number) => {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/chat/${deletedChatId}`, {
@@ -68,6 +73,7 @@ const App:React.FC = () => {
     }
   }
 
+  // チャット部屋一覧を取得する非同期関数
   const fetchChats = async (): Promise<Chat[]> => {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/chat`);
@@ -82,6 +88,7 @@ const App:React.FC = () => {
     }
   }
 
+  // 新しいチャット部屋を作成する非同期関数
   const addNewChat = async () => {
     try {
       const response = await fetch(`${import.meta.env.VITE_API_ENDPOINT}/chat`, {
@@ -98,6 +105,7 @@ const App:React.FC = () => {
     }
   }
 
+  // チャット部屋を移動した時にデータを取得
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -123,6 +131,7 @@ const App:React.FC = () => {
     };
   }, [chatId]);
 
+  // サーバーとのソケット通信関連の副作用を処理
   useEffect(() => {
     const onConnect = () => {
       setIsConnected(true);
@@ -139,17 +148,18 @@ const App:React.FC = () => {
 
     socket.on('connect', onConnect);
     socket.on('disconnect', onDisconnect);
-    socket.on('chat', onMessageEvent);
+    socket.on('chatMessage', onMessageEvent);
 
     return () => {
       socket.off('connect', onConnect);
       socket.off('disconnect', onDisconnect);
-      socket.off('chat', onMessageEvent);
+      socket.off('chatMessage', onMessageEvent);
     };
   }, []);
 
+  // メッセージを送信
   const sendMessage = () => {
-    socket.emit('chat', message);
+    socket.emit('chatMessage', message);
     setMessage(null);
   }
 
