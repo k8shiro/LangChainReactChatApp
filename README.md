@@ -4,14 +4,14 @@ LangChainでアプリを作成するときのひな形として、Flask + React 
 
 # 動かし方
 python(Flask + LangChain)とReactの開発・動作用のコンテナをbuildし起動します。  
-LangChainを動かすためにOpenAPIのAPI Keyが必要です。  
+LangChainを動かすためにOpenAIのAPI Keyが必要です。  
 
 ```
 # python(Flask + LangChain)用コンテナのbuild
 docker build -t lc-python -f python/Dockerfile .
 
 # python(Flask + LangChain)用コンテナの起動
-# OPENAI_API_KEYにOpenAPIのAPI Keyを指定
+# OPENAI_API_KEYにOpenAIのAPI Keyを指定
 docker run --rm -it -e OPENAI_API_KEY=${OPENAI_API_KEY} -v $(pwd)/python:/python -p 8080:8080 lc-python python app.py
 
 # React用コンテナのbuild
